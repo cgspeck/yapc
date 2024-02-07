@@ -1148,22 +1148,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rspo"
-version = "0.1.0"
-dependencies = [
- "clap",
- "config",
- "home",
- "homedir",
- "humantime",
- "pushover-rs",
- "serde",
- "serde_yaml",
- "tokio",
- "whoami",
-]
-
-[[package]]
 name = "rust-ini"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1979,4 +1963,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
 dependencies = [
  "linked-hash-map",
+]
+
+[[package]]
+name = "yapc"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "config",
+ "home",
+ "homedir",
+ "humantime",
+ "pushover-rs",
+ "serde",
+ "serde_yaml",
+ "tokio",
+ "whoami",
 ]

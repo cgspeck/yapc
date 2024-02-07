@@ -1,6 +1,6 @@
 use config::Config;
 use homedir::get_my_home;
-use rspo::{send::send, shell_done::shell_done, AppConfig};
+use yapc::{send::send, shell_done::shell_done, AppConfig};
 use std::{
     path::Path,
     time::{SystemTime, UNIX_EPOCH},
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let builder = Config::builder();
 
-    let cfg_fn = "rspo.yaml";
+    let cfg_fn = "yapc.yaml";
     let system_cfg = Path::new("/etc/default/").join(cfg_fn);
 
     let builder = match system_cfg.exists() {
@@ -59,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let builder = builder.add_source(
-        config::Environment::with_prefix("RSPO")
+        config::Environment::with_prefix("yapc")
             .try_parsing(true)
             .separator("_")
             .list_separator(" "),
