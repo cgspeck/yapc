@@ -1,75 +1,88 @@
-use std::time::{SystemTime, UNIX_EPOCH};
 use config::Config;
-use pushover_rs::{send_pushover_request, Message, MessageBuilder, PushoverSound};
-use serde::Deserialize;
-
-
-#[derive(Debug, Default, Deserialize, PartialEq, Eq)]
-struct AppConfig {
-    app_token: String,
-    user_key: String,
-}
+use homedir::get_my_home;
+use rspo::{send::send, shell_done::shell_done, AppConfig};
+use std::{
+    path::Path,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    body: String,
-    subject: Option<String>
+    #[command(subcommand)]
+    command: Command,
 }
 
-// #[derive(Parser)]
-// #[command(author, version, about, long_about = None)]
-// struct Cli {
-//     #[command(subcommand)]
-//     command: Option<Commands>,
-// }
-
-// #[derive(Subcommand)]
-// enum Commands {
-//     /// sends a message
-//     Send {
-//         message: String,
-//         body: Option<String>
-//     },
-// }
+#[derive(Subcommand)]
+enum Command {
+    /// sends a message
+    Send {
+        body: String,
+        subject: Option<String>,
+        #[arg(short, long)]
+        url: Option<String>,
+        #[arg(short = 't', long)]
+        url_title: Option<String>,
+        #[arg(short, long)]
+        prioity: Option<i8>,
+        // TODO: allow sound to me specified
+        // #[arg(value_enum)]
+        // sound: PushoverSound
+    },
+    ShellDone {
+        return_code: i32,
+        duration: u64,
+        command: String,
+    },
+}
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>>  {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli: Cli = Cli::parse();
 
-    let config = Config::builder()
-        // TODO: handle case where file doesn't exist
-        .add_source(config::File::with_name("/etc/default/rspo.yaml"))
-        // TODO: check file in ~/.config/rspo.conf
-        .add_source(
-            config::Environment::with_prefix("RSPO")
-                .try_parsing(true)
-                .separator("_")
-                .list_separator(" "),
-        )
-        .build()
-        .unwrap();
+    let builder = Config::builder();
+
+    let cfg_fn = "rspo.yaml";
+    let system_cfg = Path::new("/etc/default/").join(cfg_fn);
+
+    let builder = match system_cfg.exists() {
+        true => builder.add_source(config::File::from(system_cfg)),
+        false => builder,
+    };
+
+    let user_cfg = get_my_home().unwrap().unwrap().join(".config").join(cfg_fn);
+    let builder = match user_cfg.exists() {
+        true => builder.add_source(config::File::from(user_cfg)),
+        false => builder,
+    };
+
+    let builder = builder.add_source(
+        config::Environment::with_prefix("RSPO")
+            .try_parsing(true)
+            .separator("_")
+            .list_separator(" "),
+    );
+
+    let config = builder.build().unwrap();
 
     let app_config: AppConfig = config.try_deserialize().unwrap();
-
     let duration_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     let now: u64 = duration_since_epoch.as_secs();
-    let message_builder = MessageBuilder::new(app_config.user_key.as_str(),app_config.app_token.as_str(), &cli.body)
-        // .set_title("Example push notification sent through Pushover API")
-        // .set_url("https://pushover.net/", Some("Pushover"))
-        // .set_priority(1)
-        .set_sound(PushoverSound::BIKE)
-        .set_timestamp(now);
 
-    let message_builder = match cli.subject {
-        Some(subject) => message_builder.set_title(&subject),
-        None => message_builder,
-    };
-    
-    let message:Message = message_builder.build();
-    
-    send_pushover_request(message).await.unwrap();
-    Ok(())
+    match cli.command {
+        Command::Send {
+            body,
+            subject,
+            url,
+            url_title,
+            prioity,
+        } => send(app_config, now, body, subject, url, url_title, prioity).await,
+        Command::ShellDone {
+            return_code,
+            duration,
+            command,
+        } => shell_done(app_config, now, return_code, duration, command).await,
+    }
 }
