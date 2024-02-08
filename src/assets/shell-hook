@@ -5,11 +5,11 @@ function _yapc_precmd() {
   [[ -n "$yapc_start_time" ]] || return
   local duration=$(($(date +%s) - $yapc_start_time))
   yapc_start_time=''
-  auto_yapc_done_longer_than=${AUTO_YAPC_DONE_LONGER_THAN:-30}
+  auto_yapc_done_longer_than=${AUTO_YAPC_DONE_LONGER_THAN:-60}
   [[ "$duration" -le "$auto_yapc_done_longer_than" ]] && return
   local appname
   appname=$(basename "${yapc_command%% *}")
-  auto_yapc_done_ignore=${AUTO_YAPC_DONE_IGNORE:-ntf emacs htop info less mail man meld most mutt nano screen ssh tail tmux top vi vim watch}
+  auto_yapc_done_ignore=${AUTO_YAPC_DONE_IGNORE:-ntf emacs htop info less mail man meld most mutt nano nvim screen ssh tail tig tmux top vi vim watch}
   [[ " $auto_yapc_done_ignore " == *" $appname "* ]] && return
   (yapc shell-done "$code" "$duration" "$yapc_command" &)
 }

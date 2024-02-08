@@ -61,8 +61,8 @@ To avoid unnecessary notifications:
 The defaults are set is in [shell-hook](src/assets/shell-hook) and may be overridden as follows:
 
 ```shell
-# e.g. increase default notification threshold to 60 seconds
-export AUTO_YAPC_DONE_LONGER_THAN=60
+# e.g. increase default notification threshold to 90 seconds
+export AUTO_YAPC_DONE_LONGER_THAN=90
 # e.g. set ignore list to following
 export AUTO_YAPC_DONE_IGNORE="vim screen meld"
 ```
