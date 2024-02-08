@@ -44,6 +44,7 @@ pub async fn shell_done(
         None,
         None,
         None,
+        None,
     )
     .await
 }

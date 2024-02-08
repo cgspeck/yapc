@@ -1,6 +1,6 @@
 use pushover_rs::{send_pushover_request, Message, MessageBuilder, PushoverSound};
 
-use crate::AppConfig;
+use crate::{AppConfig, YapcPushoverSound};
 
 pub async fn send(
     app_config: AppConfig,
@@ -10,14 +10,16 @@ pub async fn send(
     url: Option<String>,
     url_title: Option<String>,
     prioity: Option<i8>,
+    sound: Option<YapcPushoverSound>,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let sound: PushoverSound = (sound.unwrap_or_else(|| app_config.sound)).into();
     let message_builder = MessageBuilder::new(
         app_config.user_key.as_str(),
         app_config.app_token.as_str(),
         &body,
     )
     .set_priority(prioity.unwrap_or_else(|| app_config.priotity))
-    .set_sound(PushoverSound::BIKE)
+    .set_sound(sound)
     .set_timestamp(now);
 
     let message_builder = match subject {

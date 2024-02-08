@@ -1,9 +1,12 @@
 use config::Config;
 use homedir::get_my_home;
-use yapc::{send::send, shell_done::shell_done, AppConfig};
 use std::{
     path::Path,
     time::{SystemTime, UNIX_EPOCH},
+};
+use yapc::{
+    send::send, shell_done::shell_done, shell_integration::shell_integration, AppConfig, Shell,
+    YapcPushoverSound,
 };
 
 use clap::{Parser, Subcommand};
@@ -27,14 +30,19 @@ enum Command {
         url_title: Option<String>,
         #[arg(short, long)]
         prioity: Option<i8>,
-        // TODO: allow sound to me specified
-        // #[arg(value_enum)]
-        // sound: PushoverSound
+        #[arg(short, long, value_enum)]
+        sound: Option<YapcPushoverSound>,
     },
+    /// callback for shell integration hook
     ShellDone {
         return_code: i32,
         duration: u64,
         command: String,
+    },
+    /// emit shell integration code
+    ShellIntegration {
+        #[arg(value_enum)]
+        shell: Shell,
     },
 }
 
@@ -78,11 +86,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             url,
             url_title,
             prioity,
-        } => send(app_config, now, body, subject, url, url_title, prioity).await,
+            sound,
+        } => {
+            send(
+                app_config, now, body, subject, url, url_title, prioity, sound,
+            )
+            .await
+        }
         Command::ShellDone {
             return_code,
             duration,
             command,
         } => shell_done(app_config, now, return_code, duration, command).await,
+        Command::ShellIntegration { shell } => shell_integration(shell).await,
     }
 }

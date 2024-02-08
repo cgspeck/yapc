@@ -1,0 +1,34 @@
+# shellcheck shell=bash
+
+function _yapc_precmd() {
+  local code="$?"
+  [[ -n "$yapc_start_time" ]] || return
+  local duration=$(($(date +%s) - $yapc_start_time))
+  yapc_start_time=''
+  auto_yapc_done_longer_than=${AUTO_YAPC_DONE_LONGER_THAN:-30}
+  [[ "$duration" -le "$auto_yapc_done_longer_than" ]] && return
+  local appname
+  appname=$(basename "${yapc_command%% *}")
+  auto_yapc_done_ignore=${AUTO_YAPC_DONE_IGNORE:-ntf emacs htop info less mail man meld most mutt nano screen ssh tail tmux top vi vim watch}
+  [[ " $auto_yapc_done_ignore " == *" $appname "* ]] && return
+  (yapc shell-done "$code" "$duration" "$yapc_command" &)
+}
+
+function _yapc_preexec() {
+  yapc_start_time=$(date +%s)
+  yapc_command="$1"
+}
+
+function _contains_element() {
+  local e
+  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+}
+
+if ! _contains_element _yapc_preexec "${preexec_functions[@]}"; then
+  preexec_functions+=(_yapc_preexec)
+fi
+
+if ! _contains_element _yapc_precmd "${precmd_functions[@]}"; then
+  precmd_functions+=(_yapc_precmd)
+fi
