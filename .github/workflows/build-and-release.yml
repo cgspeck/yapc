@@ -1,0 +1,32 @@
+name: Rust
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Build Release
+      run: cargo build --verbose --release
+    - name: Archive
+      uses: vimtor/action-zip@v1.1
+      with:
+        files: target/release/yapc
+        dest: yapc.zip
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        fail_on_unmatched_files: true
+        files: |
+          yapc.zip
